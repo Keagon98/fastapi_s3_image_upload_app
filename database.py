@@ -10,8 +10,6 @@ load_dotenv()
 
 IMAGE_UPLOAD_DB_SECRET = os.getenv('IMAGE_UPLOAD_DB_SECRET')
 secrets = json.loads(get_secret(IMAGE_UPLOAD_DB_SECRET))
-print(secrets)
-
 
 url_object = sa.URL.create(
     f"{secrets["engine"]}+pymysql",

@@ -1,10 +1,12 @@
+from email.message import Message
+
 import uvicorn
-from bucket_upload import upload_to_s3
+from bucket_crud import upload_to_s3, delete_from_s3
 import models
 from fastapi import Depends, FastAPI, UploadFile
 from typing import List
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from database import engine, SessionLocal
 from sqlalchemy.orm import Session
 from presign_url import presign_url
@@ -25,7 +27,7 @@ def get_db():
         db.close()
 
 @app.get("/images")
-async def get_image(db: Session = Depends(get_db)):
+def get_images(db: Session = Depends(get_db)):
     stmt = select(models.Image)
     presigned_url_list: List[ImageBase] = []
 
@@ -36,10 +38,17 @@ async def get_image(db: Session = Depends(get_db)):
 
     return presigned_url_list
 
-@app.post("/uploadfile")
-def upload_file(file: UploadFile, db: Session = Depends(get_db)):
+@app.post("/images")
+def upload_images(file: UploadFile, db: Session = Depends(get_db)):
     validate_file_size_type(file)
     return upload_to_s3(file, "images", db=db)
+
+@app.delete("/images")
+def delete_images():
+    # stmt = delete(models.Image).where(models.Image.id == id)
+    test_image = "images/vue-js-logo.png"
+    delete_from_s3(test_image)
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", port=5000, log_level="info", reload=True)

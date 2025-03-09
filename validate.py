@@ -1,8 +1,8 @@
 from typing import IO
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 import filetype
 
-def validate_file_size_type(file: IO):
+def validate_file_size_type(file: UploadFile):
     FILE_SIZE = 2097152
 
     accepted_file_types = ["image/png", "image/jpeg", "image/jpg", "image/heic", "image/heif", "image/heics", "png",
