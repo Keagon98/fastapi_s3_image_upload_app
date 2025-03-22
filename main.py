@@ -1,6 +1,9 @@
-from email.message import Message
+from http.client import HTTPException
 
 import uvicorn
+from starlette import status
+from starlette.responses import Response
+
 from bucket_crud import upload_to_s3, delete_from_s3
 import models
 from fastapi import Depends, FastAPI, UploadFile
@@ -43,11 +46,18 @@ def upload_images(file: UploadFile, db: Session = Depends(get_db)):
     validate_file_size_type(file)
     return upload_to_s3(file, "images", db=db)
 
-@app.delete("/images")
-def delete_images():
-    # stmt = delete(models.Image).where(models.Image.id == id)
-    test_image = "images/vue-js-logo.png"
-    delete_from_s3(test_image)
+@app.delete("/images/{image_id}")
+def delete_images(image_id: int, db: Session = Depends(get_db)):
+    image = db.query(models.Image).filter(models.Image.id == image_id)
+    delete_from_s3(image.first().object_key)
+
+    if image.first() is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Image with id: {image_id} does not exist")
+
+    image.delete(synchronize_session=False)
+    db.commit()
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 if __name__ == "__main__":
